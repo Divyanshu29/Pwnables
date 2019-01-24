@@ -1,0 +1,10 @@
+#Start
+We first have a look at binary i.e file start:start: ELF 32-bit LSB executable, Intel 80386, version 1 (SYSV), statically linked, not stripped.
+And checking the checksec in gdb we see that it has executable stack so we need to pass shellcode. But we have input size to 20 bytes and there is no way to pass 20 bytes shellcode.
+In this case we see that disassemble of _start function has push esp instruction on stack so esp variable is pushed on the stack. So if we can get the address of esp we will be able to get the address of the return function and possible overwrite eip correctly.
+We are again keeping in mind that ASLR is enabled and in such cases only way is either leak the address or bruteforce the address. But here we got for leaking the address.
+We know that the binary uses syscall() to read and print and hence if we for first iter make the eip jump to address 0x08048087 we will be able to print the stack and push esp will be first so we will get esp from the first 4 bytes of output.
+After doing so , we now see that we can now enter input again but this time it has no size limit i.e we can easily enter shellcode.
+So now we calculate the address of our shellcode by adding 20 to esp as there is a add esp, 0x14 instruction and just below that ret instruction which will pop eip and if we enter input of 24 bytes the last 4 bytes overwrite the eip so, now our final payload shd be like
+payload="A"*20+"Address of ret i.e begning of shellcode instruction"+shellcode
+And then we use start.py script to pwn it.
